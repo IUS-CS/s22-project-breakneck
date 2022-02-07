@@ -21,7 +21,7 @@ if st_code == 1 or st_code == 3:
     exit()
 
 #download missing packages
-print('download packages...')
+print('downloading missing packages...')
 for l in open('missing_libs.txt'):
     command = l.replace('\r', '').replace('\n', '')
     ret_code = 0
@@ -32,6 +32,6 @@ for l in open('missing_libs.txt'):
     
 #run program
 os.chdir('../')
-print('launch program...')
-os.system('cmd /k "python ' + PROJECT_NAME + '"')
+print('launching program...')
+os.system('python ' + PROJECT_NAME)
 

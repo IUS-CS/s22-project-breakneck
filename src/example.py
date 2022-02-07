@@ -12,12 +12,10 @@ import PIL
 import matplotlib
 import seaborn as sns
 
+print('HELLO WORLD!!')
 print('numpy version:', np.__version__)
 print('tensorflow version:', tf.__version__)
 print('pillow version:', PIL.__version__)
 print('matplotlib version:', matplotlib.__version__)
 print('keras version:', keras.__version__)
 print('seaborn version:', sns.__version__)
-
-print('HELLO WORLD!!')
-
