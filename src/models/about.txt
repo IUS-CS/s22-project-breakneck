@@ -1,0 +1,1 @@
+This folder contain all model source files that are needed for the image generator
