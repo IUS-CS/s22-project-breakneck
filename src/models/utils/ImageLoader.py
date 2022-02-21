@@ -76,4 +76,26 @@ class ImageLoader:
             
             #return generator
             yield X
+
+def xToXY(gen):
+    '''
+    This function duplicates the return data from a generator
+    and warps it into a tuple
+
+    Parameters
+    ----------
+    gen : TYPE
+        generator
+
+    Returns
+    -------
+    a generator that returns a tuple
+
+    '''
+    try:
+        while True:
+            X = next(gen)
+            yield (X, X)
             
+    except:
+        pass
