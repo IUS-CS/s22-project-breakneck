@@ -67,7 +67,7 @@ class ImageLoader:
             for i in range(batchSize):
                 
                 #load img
-                img = np.asarray(Image.open(self.__img_dir + '/' + self.__img_list[counter]).resize((256, 256)))/255
+                img = np.asarray(Image.open(self.__img_dir + '/' + self.__img_list[counter]).convert('RGB').resize((256, 256)))/255
                 X[i, :] = img
    
                 counter+=1
