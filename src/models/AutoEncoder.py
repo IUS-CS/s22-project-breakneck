@@ -27,7 +27,22 @@ class AutoEncoderModel(ModelWrapper):
         
         return keras.Model(inX, Y)
         
+    def __resnetBlockInverse(self, size : int, in_depth : int, out_depth : int):
+         #single inverse resnet block
+        inX = keras.layers.Input(shape = (size, size, in_depth))
         
+        X = keras.layers.Conv2DTranspose(out_depth, (3, 3), padding = 'same')(inX)
+        X = keras.layers.BatchNormalization()(X)
+        X = keras.layers.Activation('relu')(X)
+        X = keras.layers.Conv2DTranspose(out_depth, (3, 3), padding = 'same')(X)
+        X = keras.layers.BatchNormalization()(X)
+        
+        X1 = keras.layers.Conv2D(out_depth, (1, 1))(inX)
+        Y = keras.layers.Add()([X, X1])
+        Y = keras.layers.Activation('relu')(Y)
+        
+        return keras.Model(inX, Y)
+    
     def __encoder_model(self):
         
         #take (256, 256, 3) as input
@@ -56,78 +71,81 @@ class AutoEncoderModel(ModelWrapper):
         
         #output 8 * 8 * 96
         X = self.__resnetBlock(16, 48, 96)(X)
+        X = self.__resnetBlock(16, 96, 96)(X)
         X = keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2))(X)
         
         #output 4 * 4 * 192
         X = self.__resnetBlock(8, 96, 192)(X)
+        X = self.__resnetBlock(8, 192, 192)(X)
         X = keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2))(X)
         
         #output 2 * 2 * 384
         X = self.__resnetBlock(4, 192, 384)(X)
+        X = self.__resnetBlock(4, 384, 384)(X)
         X = keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2))(X)
         
         #output 1 * 1 * 768
         X = self.__resnetBlock(2, 384, 768)(X)
+        X = self.__resnetBlock(2, 768, 768)(X)
         X = keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2))(X)
         
-        #output 256
+        #output 400
         X = keras.layers.Flatten()(X)
-        X = keras.layers.Dense(256)(X)
+        X = keras.layers.Dense(400)(X)
         X = keras.layers.Activation('tanh')(X)
         
         return keras.Model(inX, X)
         
     def __decoder_model(self):
         
-        inX = keras.layers.Input(shape = (256,))
+        inX = keras.layers.Input(shape = (400,))
+        
+        #output 1 * 1 * 768
+        X = keras.layers.Dense(768)(inX)
+        X = keras.layers.Activation('sigmoid')(X)
+        X = keras.layers.Reshape((1, 1, 768))(X)
         
         #output 2 * 2 * 384
-        X = keras.layers.Dense(1536)(inX)
-        X = keras.layers.Activation('sigmoid')(X)
-        X = keras.layers.Reshape((2, 2, 384))(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(2, 768, 768)(X)
+        X = self.__resnetBlockInverse(2, 768, 384)(X)
         
         #output 4 * 4 * 192
-        X = keras.layers.Conv2DTranspose(384, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(4, 384, 192)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(4, 384, 384)(X)
+        X = self.__resnetBlockInverse(4, 384, 192)(X)
         
         #output 8 * 8 * 96
-        X = keras.layers.Conv2DTranspose(192, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(8, 192, 96)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(8, 192, 192)(X)
+        X = self.__resnetBlockInverse(8, 192, 96)(X)
         
         #output 16 * 16 * 48
-        X = keras.layers.Conv2DTranspose(96, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(16, 96, 96)(X)
-        X = self.__resnetBlock(16, 96, 48)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(16, 96, 96)(X)
+        X = self.__resnetBlockInverse(16, 96, 48)(X)
         
         #output 32 * 32 * 24
-        X = keras.layers.Conv2DTranspose(48, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(32, 48, 48)(X)
-        X = self.__resnetBlock(32, 48, 24)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(32, 48, 48)(X)
+        X = self.__resnetBlockInverse(32, 48, 24)(X)
         
         #output 64 * 64 * 12
-        X = keras.layers.Conv2DTranspose(24, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(64, 24, 24)(X)
-        X = self.__resnetBlock(64, 24, 12)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(64, 24, 24)(X)
+        X = self.__resnetBlockInverse(64, 24, 12)(X)
         
         #output 128 * 128 * 6
-        X = keras.layers.Conv2DTranspose(12, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(128, 12, 12)(X)
-        X = self.__resnetBlock(128, 12, 6)(X)
-        
-        #output 256 * 256 * 6
-        X = keras.layers.Conv2DTranspose(6, (2, 2), (2, 2))(X)
-        X = keras.layers.Activation('relu')(X)
-        X = self.__resnetBlock(256, 6, 6)(X)
-        X = self.__resnetBlock(256, 6, 6)(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(128, 12, 12)(X)
+        X = self.__resnetBlockInverse(128, 12, 6)(X)
         
         #output 256 * 256 * 3
-        X = keras.layers.Conv2DTranspose(3, (2, 2), padding = 'same')(X)
+        X = keras.layers.UpSampling2D()(X)
+        X = self.__resnetBlockInverse(256, 6, 6)(X)
+        X = self.__resnetBlockInverse(256, 6, 6)(X)
+        
+        X = keras.layers.Conv2DTranspose(3, (3, 3), padding = 'same')(X)
         X = keras.layers.Activation('sigmoid')(X)
         
         return keras.Model(inX, X)
