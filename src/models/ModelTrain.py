@@ -7,4 +7,4 @@ from AutoEncoder import auto_encoder_train
 
 #train auto encoder
 
-auto_encoder_train(20, 100)
+auto_encoder_train(50, 4000)
