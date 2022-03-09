@@ -6,4 +6,5 @@
 #### Members present: 
 - Sokheang Leang, Jamal Mahdi, Zheng Zheng, Edward Utria.
 
-
+#### Time spent: 
+- 300min
