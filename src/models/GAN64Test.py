@@ -4,15 +4,15 @@ Created on Sun Mar  6 03:20:57 2022
 """
 
 from matplotlib import pyplot as plt
-from GAN32 import GAN32Model
+from GAN64 import GAN64Model
 from utils.ImageLoader import ImageLoader
 import numpy as np
 
 imgLoader = ImageLoader('../data/dataset/')
-gan = GAN32Model()
+gan = GAN64Model()
 
 #get input images
-gen= imgLoader.getGenerator(10, imageSize = 32)
+gen= imgLoader.getGenerator(10, imageSize = 64)
 inputXimg = next(gen)
 
 #random generate parameters
