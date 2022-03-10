@@ -141,6 +141,28 @@ class ModelWrapper:
         except:
             print('unable to load the model', self.__name)
         
+    def _getModelName(self):
+        '''
+        return model name
+
+        Returns
+        -------
+        None.
+
+        '''
+        return self.__name
+    
+    def _getSavedDir(self):
+        '''
+        return model save directory
+
+        Returns
+        -------
+        None.
+
+        '''
+        return self.__fileDir + '/saved_models/'
+    
     
     def reset(self):
         '''
