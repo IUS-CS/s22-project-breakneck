@@ -45,7 +45,7 @@ class ImageLoader:
         random.seed()
         random.shuffle(self.__img_list)
     
-    def __loadPreloadBatch(self, buffer, batchSize, batchPreloadSize):
+    def __loadPreloadBatch(self, buffer, batchSize, batchPreloadSize, imageSize):
         '''
         load (batchPreloadSize) batches of images into buffer
 
@@ -56,6 +56,9 @@ class ImageLoader:
 
         batchPreloadSize : int
             preload how many batches
+            
+        imageSize
+            output image size
 
         Returns
         -------
@@ -65,9 +68,6 @@ class ImageLoader:
         for i in range(batchSize * batchPreloadSize):
             #load img
             PILImage = Image.open(self.__img_dir + '/' + self.__img_list[self.__imageCounter])
-            
-            #random rotation 
-            PILImage = PILImage.rotate(-15 + random.randint(0, 39))
             
             #random crop
             width, height = PILImage.size
@@ -80,7 +80,7 @@ class ImageLoader:
             PILImage = ImageEnhance.Contrast(PILImage).enhance(1 + np.random.uniform(0, enhance_range) - (enhance_range/2))
             
             #convert to numpy array
-            img = np.asarray(PILImage.convert('RGB').resize((256, 256)))/255
+            img = np.asarray(PILImage.convert('RGB').resize((imageSize, imageSize)))/255
             buffer[i, :] = img
 
             self.__imageCounter += 1
@@ -89,7 +89,7 @@ class ImageLoader:
         
         
     
-    def getGenerator(self, batchSize: int, batchPreloadSize = 4, batchReuseSize = 2):
+    def getGenerator(self, batchSize: int, batchPreloadSize = 2, batchReuseSize = 2, imageSize = 256):
         '''
         returns a generator that will load (batchSize) images everytime
         this generator will load images sequentially, and repeat after
@@ -106,9 +106,12 @@ class ImageLoader:
         batchReuseSize
             How many times the generator will reuse images from preloaded data before loading new data
         
+        imageSize
+            output image height and width
+        
         Returns
         -------
-        (batchSize, 256, 256, 3) numpy array
+        (batchSize, imageSize, imageSize, 3) numpy array
 
         '''
         
@@ -117,7 +120,7 @@ class ImageLoader:
             raise RuntimeError('batch size must larger than 0')
         
         #allocate space for images
-        X = np.zeros((batchSize, 256, 256, 3), np.float32)
+        X = np.zeros((batchSize, imageSize, imageSize, 3), np.float32)
         
         #avoid negative numbers
         if batchPreloadSize < 1:
@@ -127,19 +130,19 @@ class ImageLoader:
             batchReuseSize = 1
         
         #preload buffer
-        buffer = [np.zeros((batchSize * batchPreloadSize, 256, 256, 3), np.float32()), np.zeros((batchSize * batchPreloadSize, 256, 256, 3), np.float32())]
+        buffer = [np.zeros((batchSize * batchPreloadSize, imageSize, imageSize, 3), np.float32()), np.zeros((batchSize * batchPreloadSize, imageSize, imageSize, 3), np.float32())]
         currentBuffer = 0
         task = None
         
         
         #load first buffer
-        self.__loadPreloadBatch(buffer[currentBuffer], batchSize, batchPreloadSize)
+        self.__loadPreloadBatch(buffer[currentBuffer], batchSize, batchPreloadSize, imageSize)
         
         #never ends, always load more images
         while True:
             
             #load next buffer in different thread
-            task = threading.Thread(target = self.__loadPreloadBatch, args = (buffer[not currentBuffer], batchSize, batchPreloadSize))
+            task = threading.Thread(target = self.__loadPreloadBatch, args = (buffer[not currentBuffer], batchSize, batchPreloadSize, imageSize))
             task.start()
             
             #use image data from buffer
