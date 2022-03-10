@@ -11,14 +11,14 @@ from tensorflow.keras.callbacks import LambdaCallback
 
 class ModelWrapper:
     
-    __model = None
+    _model = None
     __name = None
     __fileDir = os.path.dirname(__file__)
     def __init__(self):
         
         #load init model
         self.reset()
-        self.__model.summary()
+        
         #auto load weights
         self.load()
     
@@ -88,14 +88,14 @@ class ModelWrapper:
             #save model
             if epoch % autoSave == 0:
                 self.save()
-                print('model auto saved')
+                print(self.__name ,'model auto saved')
         
         #add auto save callback while training
         if autoSave >= 1:
             kwargs['callbacks'] = [LambdaCallback(on_epoch_end = auto_save)]
         
         #train the model
-        self.__model.fit(**kwargs)
+        self._model.fit(**kwargs)
         
     def predict(self, X):
         '''
@@ -111,7 +111,7 @@ class ModelWrapper:
         model predict result
 
         '''
-        return self.__model.predict(X)
+        return self._model.predict(X)
     
     def save(self):
         '''
@@ -123,9 +123,9 @@ class ModelWrapper:
 
         '''
         try:
-            self.__model.save_weights(self.__fileDir + '/saved_models/' + self.__name + '.h5')
+            self._model.save_weights(self.__fileDir + '/saved_models/' + self.__name + '.h5')
         except:
-            print('unable to save the model')
+            print('unable to save the model', self.__name)
     
     def load(self):
         '''
@@ -137,9 +137,9 @@ class ModelWrapper:
 
         '''
         try:
-            self.__model.load_weights(self.__fileDir + '/saved_models/' + self.__name + '.h5')
+            self._model.load_weights(self.__fileDir + '/saved_models/' + self.__name + '.h5')
         except:
-            print('unable to load the model')
+            print('unable to load the model', self.__name)
         
     
     def reset(self):
@@ -152,10 +152,10 @@ class ModelWrapper:
 
         '''
         #get defined model
-        self.__model, self.__name = self._define_model()
+        self._model, self.__name = self._define_model()
         
         #compile model
-        self._compile_model(self.__model)
+        self._compile_model(self._model)
 
     def getModel(self):
-        return self.__model
+        return self._model
