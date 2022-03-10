@@ -231,12 +231,6 @@ class GAN32Model(ModelWrapper):
                 genLoss = self._model.train_on_batch(x = [upScaleImg, parameterVector], y = trueLabel)
                 
                 print('epoch', ep, 'generator loss:', genLoss, 'discriminator loss:', disLoss)
-                
-                if step == 0:
-                    plt.imshow(upScaleImg[0])
-                    plt.show()
-                    plt.imshow(fakeX[0])
-                    plt.show()
                  
             #autosave
             autoSaveCounter+=1
@@ -256,4 +250,3 @@ def gan32_train(batchSize : int, epoch : int):
     gan.train(x = imageGenerator, steps_per_epoch = 20, batch_size = batchSize, epochs = epoch)
     gan.save()
 
-gan32_train(20, 10)
