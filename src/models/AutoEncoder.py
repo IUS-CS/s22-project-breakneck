@@ -9,7 +9,10 @@ from utils.ImageLoader import xToXY
 from tensorflow import keras
 import matplotlib.pyplot as plt
 
+
+
 class AutoEncoderModel(ModelWrapper):
+    
     
     def __resnetBlock(self, size : int, in_depth : int, out_depth : int):
         #single resnet block, for details see https://towardsdatascience.com/an-overview-of-resnet-and-its-variants-5281e2f56035
