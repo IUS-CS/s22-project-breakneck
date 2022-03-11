@@ -14,7 +14,7 @@ K.clear_session()
 #auto_encoder_train(20, 3000)
 
 #train GAN32
-#gan32_train(20, 1000)
+gan32_train(20, 1000)
 
 #train GAN64
-gan64_train(5, 1000)
+#gan64_train(5, 1000)
