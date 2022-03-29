@@ -334,3 +334,6 @@ $RECYCLE.BIN/
 
 # ignore dataset
 src/data/dataset/*
+
+#ignore h5 model file
+.h5
