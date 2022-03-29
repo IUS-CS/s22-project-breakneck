@@ -5,18 +5,16 @@ import glob
 from google.cloud import storage
 from pathlib import Path
 
-### Script for accessing google cloud storage currently only provides the ability to upload files  
+### Script for uploading and downloading models from google cloud storage
 
 BUCKET_NAME='project_fake_image_bucket'
 
-# storage module looks at this environ path and locates service account file
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'Service_Key_GCS.json'
-storage_client = storage.Client()
+storage_client = storage.Client.create_anonymous_client()
+bucket = storage_client.bucket(BUCKET_NAME)
 
 # blob: binary large object, a collection of binary data stored as one... blob
 def upload_to_bucket(blob_name: str, file_path: str):
     try:
-        bucket = storage_client.get_bucket(BUCKET_NAME)
         blob = bucket.blob(blob_name)
         blob.upload_from_filename(file_path)
         return True
@@ -26,7 +24,6 @@ def upload_to_bucket(blob_name: str, file_path: str):
         
 def download_files_from_bucket(blob_name: str, file_path: str):
     try:
-       bucket = storage_client.bucket(BUCKET_NAME)
        blob = bucket.blob(blob_name)
        with open(file_path, 'wb') as f:
            storage_client.download_blob_to_file(blob, f)
@@ -35,9 +32,8 @@ def download_files_from_bucket(blob_name: str, file_path: str):
        print(e)
        return False
     
-    # Return a list of files (their full paths) in gcs 
+    # Returns a list of files (their full paths) in gcs 
 def list_files_in_gcs():
-    bucket = storage_client.get_bucket(BUCKET_NAME)
     blob_list = bucket.list_blobs()
     files = []
  
@@ -50,26 +46,6 @@ def list_files_in_gcs():
         
     return files
 
-# downloads all files in bucket to specified address
-def download_all(files_list: list, filepath: str):
-    bucket = storage_client.get_bucket(BUCKET_NAME)
-    for file in files_list:
-        gcs_path = file
-        filename = file.split("/")
-        filename = file[1]
-        download_files_from_bucket(gcs_path, filepath+"/"+filename)
-        
-def upload_dir(blob_name: str, dir_path: str):
-    bucket = storage_client.get_bucket(BUCKET_NAME)
-    files = glob.glob(dir_path+"/*")
-    for file in files:
-        file=file.split(",")
-        #upload_to_bucket(blaob_name, dir_path+file)
-        
-
-
- # want to give them the ability to download all files from the model folder to a specific directory 
- # want to give them th eabiltiy to upload files to the model folder 
 if __name__ == '__main__':
         
     path = os.getcwd()
@@ -81,27 +57,28 @@ if __name__ == '__main__':
     
     run = True
     while(run):       
-        print("1: download all files in GCS model folder\n"
-                "2: upload a file to GCS model folder\n"
-                "3: delete a file from GCS model folder\n"
+        print(  "1: download all models (will be saved in models/saved_models\n"
+                "2: upload a model to GCS\n"
                 "l: list files in GCS\n"
                 )
+        
         choice = input()
         if (choice == '1'):
-            files=input()
-            print(files)
-            print("Input the path where you would like to store the files, assume you're already in the src folder\n"
-                "Example: models/saved_models")
-            path = input()
-            download_files_from_bucket(files, src_dir+"/"+path)
+            files= list_files_in_gcs()
+            path = src_dir+"/saved_models/"
+            
+            i = 0
+            while i< len(files):
+                download_files_from_bucket(files[i], path+files[i])
+                i+=1
             
         elif (choice == '2'):
-            print("Input name of the file you'll be uploading")
-            file_name= input()
-            print("Input the path to acquire this file from, assume you're already in the src folder\n"
-                "Example: models/saved_models")
-            path = input()
-            upload_to_bucket("models/"+file_name,src_dir+"/"+path+"/"+file_name)
+            print("\n Make sure the model is stored in the saved_models directory, Input the name of the model you want to upload \n")
+            file = input()
+            path = src_dir+"/saved_models/"+file
+            print(path)
+            upload_to_bucket(file, path)
+            print("Be patient, depending on the size of the model upload could take a while")
             
         elif (choice == 'l'):
             list = list_files_in_gcs()
@@ -111,5 +88,3 @@ if __name__ == '__main__':
         if(input() == 'y'):
             run = False
             
-    
-    
