@@ -11,9 +11,9 @@ from matplotlib import pyplot as plt
 import pickle
 
 '''
-Generator part for GAN64 model
+Generator part for GAN128 model
 '''
-class Generator64(ModelWrapper):
+class Generator128(ModelWrapper):
     
     def __block(self, size : int, in_depth : int, out_depth : int, kSize):
         
@@ -34,10 +34,9 @@ class Generator64(ModelWrapper):
     
     def _define_model(self):
         
-        # input 64 * 64 image-----------------------
-        X0 = keras.layers.Input(shape = (64, 64, 3))
-        Y0 = self.__block(64, 3, 256, 2)(X0)
-        Y0_1 = self.__block(64, 3, 256, 4)(X0)
+        # input 128 * 128 image-----------------------
+        X0 = keras.layers.Input(shape = (128, 128, 3))
+        Y0 = self.__block(128, 3, 400, 4)(X0)
         #----------------------------------------------
         
         #parameter vector-----------------------------
@@ -48,48 +47,52 @@ class Generator64(ModelWrapper):
         Y1 = keras.layers.ReLU()(Y1)
         #---------------------------------------------
         
-        #up-scale to 4 * 4 * 900
-        Y1 = self.__blockInverse(2, 1024, 900, 2)(Y1)
-        Y1 = self.__block(4, 900, 900, 2)(Y1)
+        #up-scale to 4 * 4 * 800
+        Y1 = self.__blockInverse(2, 1024, 800, 2)(Y1)
+        Y1 = self.__block(4, 800, 800, 2)(Y1)
         
-        #up-scale to 8 * 8 * 800
-        Y1 = self.__blockInverse(4, 900, 800, 2)(Y1)
-        Y1 = self.__block(8, 800, 800, 2)(Y1)
+        #up-scale to 8 * 8 * 600
+        Y1 = self.__blockInverse(4, 800, 600, 2)(Y1)
+        Y1 = self.__block(8, 600, 600, 2)(Y1)
         
-        #up-scale to 16 * 16 * 700
-        Y1 = self.__blockInverse(8, 800, 700, 2)(Y1)
-        Y1 = self.__block(16, 700, 700, 2)(Y1)
+        #up-scale to 16 * 16 * 500
+        Y1 = self.__blockInverse(8, 600, 500, 2)(Y1)
+        Y1 = self.__block(16, 500, 500, 2)(Y1)
         
-        #up-scale to 32 * 32 * 600
-        Y1 = self.__blockInverse(16, 700, 600, 3)(Y1)
-        Y1 = self.__block(32, 600, 600, 3)(Y1)
+        #up-scale to 32 * 32 * 460
+        Y1 = self.__blockInverse(16, 500, 460, 3)(Y1)
+        Y1 = self.__block(32, 460, 460, 3)(Y1)
         
-        #up-scale to 64 * 64 * 512
-        Y1 = self.__blockInverse(32, 600, 512, 3)(Y1)
-        Y1 = self.__block(64, 512, 512, 3)(Y1)
+        #up-scale to 64 * 64 * 430
+        Y1 = self.__blockInverse(32, 460, 430, 3)(Y1)
+        Y1 = self.__block(64, 430, 430, 3)(Y1)
         
-        #add Y0 and Y1, output 64 * 64 * 1024
-        Y2 = keras.layers.Concatenate()([Y0, Y0_1, Y1])
+        #up-scale to 64 * 64 * 400
+        Y1 = self.__blockInverse(64, 430, 400, 4)(Y1)
+        Y1 = self.__block(128, 400, 400, 4)(Y1)
         
-        #up-scale to 128 * 128 * 512
-        Y2 = self.__blockInverse(64, 1024, 800, 4)(Y2)
-        Y2 = self.__block(128, 800, 800, 2)(Y2)
-        Y2 = self.__block(128, 800, 512, 4)(Y2)
+        #concat Y0 and Y1, output 128 * 128 * 800
+        Y2 = keras.layers.Concatenate()([Y0, Y1])
         
-        #output 128 * 128 * 3
-        Y2 = keras.layers.Conv2D(3, (3, 3), padding = 'same')(Y2)
+        #up-scale to 256 * 256 * 512
+        Y2 = self.__blockInverse(128, 800, 800, 4)(Y2)
+        Y2 = self.__block(256, 800, 800, 2)(Y2)
+        Y2 = self.__block(256, 800, 512, 5)(Y2)
+        
+        #output 256 * 256 * 3
+        Y2 = keras.layers.Conv2D(3, (4, 4), padding = 'same')(Y2)
         Y2 = keras.layers.Activation('sigmoid')(Y2)
         
-        return keras.Model([X0, X1], Y2), 'Generator64'
+        return keras.Model([X0, X1], Y2), 'Generator128'
         
         
     def _compile_model(self, model):
         pass
 
 '''
-Discriminator part for GAN64 model
+Discriminator part for GAN128 model
 '''
-class Discriminator64(ModelWrapper):
+class Discriminator128(ModelWrapper):
     
     def __block(self, size : int, in_depth : int, out_depth : int, kSize):
         
@@ -101,12 +104,12 @@ class Discriminator64(ModelWrapper):
     
     def _define_model(self):
         
-        #take 128 * 128 * 3 image
-        X0 = keras.layers.Input(shape = (128, 128, 3))
+        #take 256 * 256 * 3 image
+        X0 = keras.layers.Input(shape = (256, 256, 3))
         
         vgg16 = keras.applications.VGG16(include_top = False, weights = "imagenet")
 
-        #set only last 6 layers trainable (fine tune)
+        #set only last 4 layers trainable (fine tune)
         for i in range(len(vgg16.layers)):
             if i < len(vgg16.layers) - 9:
                 vgg16.layers[i].trainable = False
@@ -124,15 +127,15 @@ class Discriminator64(ModelWrapper):
         Y0 = keras.layers.Dense(2)(Y0)
         Y0 = keras.layers.Activation('softmax')(Y0)
         
-        return keras.Model(X0, Y0), 'Discriminator64'
+        return keras.Model(X0, Y0), 'Discriminator128'
         
     def _compile_model(self, model):
         model.compile(optimizer = keras.optimizers.RMSprop(learning_rate = 0.00001), loss = keras.losses.CategoricalCrossentropy())
 
 '''
-First layer GAN model that outputs 64x64 image
+GAN model that output 256x256 image
 '''
-class GAN64Model(ModelWrapper):
+class GAN128Model(ModelWrapper):
     
     __generator = None
     __generatorWrapper = None
@@ -142,8 +145,8 @@ class GAN64Model(ModelWrapper):
     def __init__(self):
         
         #load generator and discriminator model first
-        self.__generatorWrapper = Generator64()
-        self.__discriminatorWrapper = Discriminator64()
+        self.__generatorWrapper = Generator128()
+        self.__discriminatorWrapper = Discriminator128()
         
         self.__generator = self.__generatorWrapper.getModel()
         self.__discriminator = self.__discriminatorWrapper.getModel()
@@ -152,8 +155,8 @@ class GAN64Model(ModelWrapper):
     
     def _define_model(self):
         #construct combined model, this combined model only train the generator, so set discriminator untrainable
-        #two inputs for generator one for feature vector, one for feature vector and one for parameter vector
-        X0 = keras.layers.Input(shape = (64, 64, 3))
+        #two inputs for generator one for feature vector and one for parameter vector
+        X0 = keras.layers.Input(shape = (128, 128, 3))
         X1 = keras.layers.Input(shape = (400,))
         
         #pass X0, X1 to generator
@@ -165,7 +168,7 @@ class GAN64Model(ModelWrapper):
         #connect the generator to the discriminator
         Y0 = self.__discriminator(Y0)
         
-        return keras.Model([X0, X1], Y0), 'GAN64'
+        return keras.Model([X0, X1], Y0), 'GAN128'
         
         
     def _compile_model(self, model):
@@ -194,8 +197,8 @@ class GAN64Model(ModelWrapper):
         
         #simple model to shrink image
         def shrinkModel():
-            x = keras.layers.Input(shape = (128, 128, 3))
-            y = keras.layers.Resizing(64, 64)(x)
+            x = keras.layers.Input(shape = (256, 256, 3))
+            y = keras.layers.Resizing(128, 128)(x)
             return keras.Model(x, y)
         
         
@@ -233,11 +236,11 @@ class GAN64Model(ModelWrapper):
                 autoSaveCounter = 0
         
 
-def gan64_train(batchSize : int, epoch : int):
-    gan = GAN64Model()
+def gan128_train(batchSize : int, epoch : int):
+    gan = GAN128Model()
     imgLoader = ImageLoader('../data/dataset/')
     
-    imageGenerator = imgLoader.getGenerator(batchSize, imageSize = 128)
+    imageGenerator = imgLoader.getGenerator(batchSize, imageSize = 256)
     
     gan.train(x = imageGenerator, steps_per_epoch = 20, batch_size = batchSize, epochs = epoch)
     gan.save()
