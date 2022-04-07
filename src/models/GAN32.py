@@ -26,7 +26,7 @@ class Generator32(ModelWrapper):
     def __blockInverse(self, size : int, in_depth : int, out_depth : int, kSize):
         inX = keras.layers.Input(shape = (size, size, in_depth))
         Y = keras.layers.UpSampling2D(size = (2, 2))(inX)
-        Y = keras.layers.Conv2D(out_depth, kernel_size = kSize, padding = 'same')(Y)
+        Y = keras.layers.Conv2D(out_depth, kernel_size = 1)(Y)
         Y = keras.layers.BatchNormalization(momentum = 0.8)(Y)
         Y = keras.layers.ReLU()(Y)
         
@@ -37,34 +37,39 @@ class Generator32(ModelWrapper):
         # input 32 * 32 image-----------------------
         X0 = keras.layers.Input(shape = (32, 32, 3))
         Y0 = self.__block(32, 3, 512, 3)(X0)
-        Y0 = self.__block(32, 512, 512, 3)(Y0)
         #----------------------------------------------
         
         #parameter vector-----------------------------
         X1 = keras.layers.Input(shape = (400,))
-        Y1 = keras.layers.Dense(32768)(X1)
-        Y1 = keras.layers.Reshape((8, 8, 512))(Y1)
+        Y1 = keras.layers.Dense(4096)(X1)
+        Y1 = keras.layers.Reshape((2, 2, 1024))(Y1)
         Y1 = keras.layers.BatchNormalization(momentum = 0.8)(Y1)
         Y1 = keras.layers.ReLU()(Y1)
         #---------------------------------------------
         
-        #up-scale to 16 * 16 * 512
-        Y1 = self.__blockInverse(8, 512, 512, 2)(Y1)
-        Y1 = self.__block(16, 512, 512, 2)(Y1)
-        Y1 = self.__block(16, 512, 512, 2)(Y1)
+        #up-scale to 4 * 4 * 800
+        Y1 = self.__blockInverse(2, 1024, 800, 2)(Y1)
+        Y1 = self.__block(4, 800, 800, 2)(Y1)
+        
+        #up-scale to 8 * 8 * 650
+        Y1 = self.__blockInverse(4, 800, 650, 2)(Y1)
+        Y1 = self.__block(8, 650, 650, 2)(Y1)
+        
+        #up-scale to 16 * 16 * 550
+        Y1 = self.__blockInverse(8, 650, 550, 2)(Y1)
+        Y1 = self.__block(16, 550, 550, 2)(Y1)
         
         #up-scale to 32 * 32 * 512
-        Y1 = self.__blockInverse(16, 512, 512, 3)(Y1)
-        Y1 = self.__block(32, 512, 512, 3)(Y1)
+        Y1 = self.__blockInverse(16, 550, 512, 3)(Y1)
         Y1 = self.__block(32, 512, 512, 3)(Y1)
         
         #concat Y0 and Y1, output 32 * 32 * 1024
         Y2 = keras.layers.Concatenate()([Y0, Y1])
         
         #up-scale to 64 * 64 * 512
-        Y2 = self.__blockInverse(32, 1024, 600, 3)(Y2)
-        Y2 = self.__block(64, 600, 512, 3)(Y2)
-        Y2 = self.__block(64, 512, 512, 3)(Y2)
+        Y2 = self.__blockInverse(32, 1024, 1024, 3)(Y2)
+        Y2 = self.__block(64, 1024, 700, 2)(Y2)
+        Y2 = self.__block(64, 700, 512, 3)(Y2)
         
         #output 64 * 64 * 3
         Y2 = keras.layers.Conv2D(3, (3, 3), padding = 'same')(Y2)
@@ -98,7 +103,7 @@ class Discriminator32(ModelWrapper):
 
         #set only last 4 layers trainable (fine tune)
         for i in range(len(vgg16.layers)):
-            if i < len(vgg16.layers) - 4:
+            if i < len(vgg16.layers) - 9:
                 vgg16.layers[i].trainable = False
             else:
                 break

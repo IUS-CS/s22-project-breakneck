@@ -58,24 +58,33 @@ if __name__ == '__main__':
     run = True
     while(run):       
         print(  "1: download all models (will be saved in models/saved_models\n"
-                "2: upload a model to GCS\n"
+                "2: upload all models\n"
+                "3: upload a model to GCS\n"
                 "l: list files in GCS\n"
                 )
         
         choice = input()
         if (choice == '1'):
             files= list_files_in_gcs()
-            path = src_dir+"/saved_models/"
+            path = src_dir+"/models/saved_models/"
             
             i = 0
             while i< len(files):
                 download_files_from_bucket(files[i], path+files[i])
                 i+=1
+        elif(choice == '2'):
+            path = src_dir+"/models/saved_models/"
+            file_list = os.listdir(path)
             
-        elif (choice == '2'):
+            for name in file_list:
+                print('uploading: ', name)
+                upload_to_bucket(name, path + name)
+            
+            
+        elif (choice == '3'):
             print("\n Make sure the model is stored in the saved_models directory, Input the name of the model you want to upload \n")
             file = input()
-            path = src_dir+"/saved_models/"+file
+            path = src_dir+"/models/saved_models/"+file
             print(path)
             upload_to_bucket(file, path)
             print("Be patient, depending on the size of the model upload could take a while")
