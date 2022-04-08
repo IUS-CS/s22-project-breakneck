@@ -1,7 +1,0 @@
-- Sprint 3
-    - Task Completed
-        - Evalulation model built
-        - Encoder and decoder model trained
-        - Improvement to autoencoder to allow for bigger model.
-        - Improvement to image loader
-        - Bug fixes
