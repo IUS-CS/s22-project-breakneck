@@ -1,6 +1,0 @@
-- Sprint 2
-    - Task Completed
-        - Obtained the dataset that will be used for training.
-        - Encoder and decoder model built.
-        - ImageLoader.py added
-        - Model wrapper added to allow for the saving and loading of models.
