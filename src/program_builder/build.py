@@ -8,7 +8,7 @@ This file build&run the project
 import environment_check as env
 import os
 import subprocess
-PROJECT_NAME = 'example.py'
+PROJECT_NAME = 'program.py'
 
 
 os.chdir('program_builder')
@@ -29,9 +29,8 @@ for l in open('missing_libs.txt'):
     result = subprocess.check_output(command.split(' '), ret_code)
     if ret_code !=0:
         print('error, return code:', ret_code)
-    
+
 #run program
-os.chdir('../')
+os.chdir('../models/')
 print('launching program...')
 os.system('python ' + PROJECT_NAME)
-
