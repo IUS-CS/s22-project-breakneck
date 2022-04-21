@@ -8,6 +8,7 @@ import numpy as np
 from utils.ImageLoader import ImageLoader
 from tensorflow import keras
 from matplotlib import pyplot as plt
+from tensorflow.keras.layers.experimental.preprocessing import Resizing
 import pickle
 
 '''
@@ -114,7 +115,7 @@ class Discriminator64(ModelWrapper):
                 break
         
         #resize to 224 * 224
-        Y0 = keras.layers.Resizing(224, 224)(X0)
+        Y0 = Resizing(224, 224)(X0)
         
         #go through vgg16
         Y0 = vgg16(Y0)
