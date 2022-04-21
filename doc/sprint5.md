@@ -1,0 +1,4 @@
+- Sprint 5
+  - Task Completed
+    - GAN128 created and trained
+    - Completed the GUI for the program
