@@ -10,6 +10,7 @@ from PIL import Image
 from PIL import ImageTk
 import tkinter as tk
 from tensorflow import keras
+from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tkinter import filedialog as fd
 from tkinter import messagebox
 
@@ -76,7 +77,7 @@ def selectButtonCallback():
         messagebox.showinfo('Unable to load this image', e)
         
 def genImg(img, paraVector):
-    output = keras.layers.Resizing(32, 32)(img)
+    output = Resizing(32, 32)(img)
     output = gan32.predict([output, paraVector])
     output = gan64.predict([output, paraVector])
     output = gan128.predict([output, paraVector])
